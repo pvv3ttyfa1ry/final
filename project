@@ -1,0 +1,196 @@
+import java.util.Random;
+import java.util.Scanner;
+
+public class PigGame {
+
+    // ===== CONSTANTS =====
+    private static final int WIN_SCORE = 100;
+    private static final int BONUS_POINTS = 2;
+
+    // ===== GLOBAL VARIABLES =====
+    private static final Scanner input = new Scanner(System.in);
+    private static final Random random = new Random();
+
+    // Entry Point
+    public static void main(String[] args) {
+        boolean playAgain;
+        do {
+            startGame();
+            playAgain = askPlayAgain();
+        } while (playAgain);
+
+        System.out.println("Thanks for playing Pig!");
+    }
+
+    // ===== MAIN GAME LOOP =====
+    public static void startGame() {
+        int playerTotal = 0;
+        int computerTotal = 0;
+        int consecutiveTurns = 0;
+        String currentPlayer = "Player";
+
+        System.out.println("Welcome to the Dice Game: Pig!");
+        System.out.println("First to reach " + WIN_SCORE + " points wins.\n");
+
+        while (playerTotal < WIN_SCORE && computerTotal < WIN_SCORE) {
+            if (currentPlayer.equals("Player")) {
+                playerTotal = playerTurn(playerTotal, consecutiveTurns);
+                currentPlayer = "Computer";
+            } else {
+                computerTotal = computerTurn(computerTotal);
+                currentPlayer = "Player";
+            }
+        }
+
+        // Display winner
+        if (playerTotal >= WIN_SCORE) {
+            System.out.println("\n🎉 Congratulations! You win with " + playerTotal + " points!");
+        } else {
+            System.out.println("\n💻 Computer wins with " + computerTotal + " points!");
+        }
+    }
+
+    // ===== PLAYER TURN =====
+    public static int playerTurn(int gameTotal, int consecutiveTurns) {
+        int turnTotal = 0;
+        boolean passed = false;
+        consecutiveTurns++;
+
+        while (!passed) {
+            int[] dice = rollDice();
+            int die1 = dice[0];
+            int die2 = dice[1];
+            System.out.println("You rolled: " + die1 + " and " + die2);
+
+            // Double ones: reset entire score
+            if (die1 == 1 && die2 == 1) {
+                System.out.println("Double ones! Your total score resets to 0.");
+                gameTotal = 0;
+                turnTotal = 0;
+                break;
+            }
+            // Single one: lose turn
+            else if (die1 == 1 || die2 == 1) {
+                System.out.println("Rolled a 1! You lose all points from this turn.");
+                turnTotal = 0;
+                break;
+            }
+
+            // Normal roll
+            int turnPoints = die1 + die2;
+
+            // Matching dice bonus
+            if (die1 == die2) {
+                int matchBonus = Math.max(10, die1 + die2);
+                turnPoints += matchBonus;
+                System.out.println("Matched dice! Bonus added: " + matchBonus);
+            }
+
+            // Consecutive turn bonus
+            int bonus = BONUS_POINTS * (consecutiveTurns - 1);
+            turnPoints += bonus;
+
+            turnTotal += turnPoints;
+            System.out.println("Turn total: " + turnTotal);
+
+            // Ask user to roll again or pass
+            System.out.print("Do you want to roll again? (y/n): ");
+            String choice = input.nextLine().trim().toLowerCase();
+
+            if (choice.equals("n")) {
+                passed = true;
+                gameTotal += turnTotal;
+                consecutiveTurns = 0;
+                System.out.println("You passed. Your game total is now " + gameTotal + ".\n");
+            }
+        }
+        return gameTotal;
+    }
+
+    // ===== COMPUTER TURN =====
+    public static int computerTurn(int gameTotal) {
+        int turnTotal = 0;
+        int consecutiveTurns = 1;
+
+        System.out.println("=== Computer's Turn ===");
+
+        while (true) {
+            delay(1000); // 1-second delay for realism
+
+            int[] dice = rollDice();
+            int die1 = dice[0];
+            int die2 = dice[1];
+            System.out.println("Computer rolled: " + die1 + " and " + die2);
+
+            // Double ones
+            if (die1 == 1 && die2 == 1) {
+                System.out.println("Computer rolled double ones! Total reset to 0.");
+                gameTotal = 0;
+                break;
+            }
+            // Single one
+            else if (die1 == 1 || die2 == 1) {
+                System.out.println("Computer rolled a 1! Turn total lost.");
+                turnTotal = 0;
+                break;
+            }
+
+            // Normal roll
+            int turnPoints = die1 + die2;
+
+            // Matching dice bonus
+            if (die1 == die2) {
+                int matchBonus = Math.max(10, die1 + die2);
+                turnPoints += matchBonus;
+            }
+
+            // Consecutive bonus
+            int bonus = BONUS_POINTS * (consecutiveTurns - 1);
+            turnPoints += bonus;
+
+            turnTotal += turnPoints;
+            System.out.println("Computer turn total: " + turnTotal);
+
+            // Decide to roll or pass
+            int decision = random.nextInt(2) + 1; // 1 = roll again, 2 = pass
+            if (decision == 2) {
+                System.out.println("Computer passes.");
+                gameTotal += turnTotal;
+                break;
+            } else {
+                System.out.println("Computer rolls again...");
+                consecutiveTurns++;
+            }
+
+            if (gameTotal + turnTotal >= WIN_SCORE) {
+                gameTotal += turnTotal;
+                break;
+            }
+        }
+        System.out.println("Computer's total score: " + gameTotal + "\n");
+        return gameTotal;
+    }
+
+    // ===== HELPER METHODS =====
+    public static int[] rollDice() {
+        int[] dice = new int[2];
+        for (int i = 0; i < dice.length; i++) {
+            dice[i] = random.nextInt(6) + 1; // 1–6
+        }
+        return dice;
+    }
+
+    public static void delay(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public static boolean askPlayAgain() {
+        System.out.print("Would you like to play again? (y/n): ");
+        String choice = input.nextLine().trim().toLowerCase();
+        return choice.equals("y");
+    }
+}
